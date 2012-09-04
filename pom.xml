@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.csanchez.aws</groupId>
   <artifactId>glacier</artifactId>
-  <version>1.0</version>
+  <version>1.0.1</version>
 
   <properties>
     <mainClass>org.csanchez.aws.glacier.Glacier</mainClass>

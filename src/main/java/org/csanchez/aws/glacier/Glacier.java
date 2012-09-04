@@ -34,12 +34,23 @@ import com.amazonaws.auth.policy.Statement;
 import com.amazonaws.auth.policy.Statement.Effect;
 import com.amazonaws.auth.policy.actions.SQSActions;
 import com.amazonaws.services.glacier.AmazonGlacierClient;
+import com.amazonaws.services.glacier.model.CreateVaultRequest;
+import com.amazonaws.services.glacier.model.CreateVaultResult;
 import com.amazonaws.services.glacier.model.DeleteArchiveRequest;
+import com.amazonaws.services.glacier.model.DeleteVaultRequest;
+import com.amazonaws.services.glacier.model.DescribeVaultOutput;
+import com.amazonaws.services.glacier.model.DescribeVaultRequest;
+import com.amazonaws.services.glacier.model.DescribeVaultResult;
 import com.amazonaws.services.glacier.model.GetJobOutputRequest;
 import com.amazonaws.services.glacier.model.GetJobOutputResult;
+import com.amazonaws.services.glacier.model.GlacierJobDescription;
 import com.amazonaws.services.glacier.model.InitiateJobRequest;
 import com.amazonaws.services.glacier.model.InitiateJobResult;
 import com.amazonaws.services.glacier.model.JobParameters;
+import com.amazonaws.services.glacier.model.ListJobsRequest;
+import com.amazonaws.services.glacier.model.ListJobsResult;
+import com.amazonaws.services.glacier.model.ListVaultsRequest;
+import com.amazonaws.services.glacier.model.ListVaultsResult;
 import com.amazonaws.services.glacier.transfer.ArchiveTransferManager;
 import com.amazonaws.services.glacier.transfer.UploadResult;
 import com.amazonaws.services.sns.AmazonSNSClient;
@@ -90,7 +101,7 @@ public class Glacier {
     public static void main(String[] args) throws Exception {
 
         Options options = commonOptions();
-        if (args.length < 2) {
+        if (args.length < 1) {
             printHelp(options);
             return;
         }
@@ -112,6 +123,32 @@ public class Glacier {
         if ("inventory".equals(arguments.get(0))) {
             glacier.inventory(arguments.get(1), cmd.getOptionValue("topic", "glacier"), cmd.getOptionValue("queue", "glacier"),
                     cmd.getOptionValue("file", "glacier.json"));
+        } else if ("listvaults".equals(arguments.get(0))) {
+            glacier.listVaults();       	
+        } else if ("listjobs".equals(arguments.get(0))) {
+            if (arguments.size() != 2) {
+                printHelp(options);
+                return;
+            }
+            glacier.listJobs(arguments.get(1));       	
+        } else if ("describe".equals(arguments.get(0))) {
+            if (arguments.size() != 2) {
+                printHelp(options);
+                return;
+            }
+            glacier.describe(arguments.get(1));       	
+        } else if ("erase".equals(arguments.get(0))) {
+            if (arguments.size() != 2) {
+                printHelp(options);
+                return;
+            }
+            glacier.erase(arguments.get(1));       	
+        } else if ("create".equals(arguments.get(0))) {
+            if (arguments.size() != 2) {
+                printHelp(options);
+                return;
+            }
+            glacier.create(arguments.get(1));       	
         } else if ("upload".equals(arguments.get(0))) {
             if (arguments.size() < 3) {
                 printHelp(options);
@@ -140,7 +177,8 @@ public class Glacier {
     private static void printHelp(Options options) {
         HelpFormatter formatter = new HelpFormatter();
         formatter.printHelp("glacier " + "upload vault_name file1 file2 ... | " + "download vault_name archiveId output_file | "
-                + "delete vault_name archiveId | " + "inventory vault_name | ", options);
+                + "delete vault_name archiveId | " + "inventory vault_name | " + "describe vault_name | " + "erase vault_name | "
+        		+ "create vault_name | " + "listjobs vault_name | " + "listvaults", options);
     }
 
     @SuppressWarnings("static-access")
@@ -200,6 +238,85 @@ public class Glacier {
         } catch (Exception e) {
             throw new RuntimeException("Error " + msg, e);
         }
+    }
+
+    public void create(String vaultName) {
+        String msg = "Requesting create Glacier vault " + vaultName + " (region " + this.region + ")";
+        System.out.println(msg);
+        try {
+        	CreateVaultRequest request = new CreateVaultRequest().withVaultName(vaultName);
+        	CreateVaultResult result = client.createVault(request);
+
+        	System.out.println("Created vault successfully: " + result.getLocation());        
+       	} catch (Exception e) {
+       		System.err.println(e.getMessage());
+        }    	
+    }
+
+    public void erase(String vaultName) {
+        String msg = "Requesting delete Glacier vault " + vaultName + " (region " + this.region + ")";
+        System.out.println(msg);
+        try {
+            DeleteVaultRequest request = new DeleteVaultRequest().withVaultName(vaultName);
+
+            client.deleteVault(request);
+            System.out.println("Deleted vault: " + vaultName);
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }    	
+    }
+
+    public void describe(String vaultName) {
+        String msg = "Requesting metadata from Glacier vault " + vaultName + " (region " + this.region + ")";
+        System.out.println(msg);
+
+        DescribeVaultRequest request = new DescribeVaultRequest().withVaultName(vaultName);
+        DescribeVaultResult result = client.describeVault(request);
+    
+        System.out.print(
+            "\nCreationDate: " + result.getCreationDate() +
+            "\nLastInventoryDate: " + result.getLastInventoryDate() +
+            "\nNumberOfArchives: " + result.getNumberOfArchives() + 
+            "\nSizeInBytes: " + result.getSizeInBytes() + 
+            "\nVaultARN: " + result.getVaultARN() + 
+            "\nVaultName: " + result.getVaultName());
+    }
+    
+    public void listJobs(String vault) {
+    	String msg = "Requesting list of all jobs for vault " + vault + " (region " + this.region + ")";
+    	System.out.println(msg);
+    	
+    	ListJobsRequest request = new ListJobsRequest(vault);
+    	ListJobsResult result = client.listJobs(request);
+    	
+    	List<GlacierJobDescription> jobList = result.getJobList();
+    	for (GlacierJobDescription descr : jobList) {
+    		System.out.println("JobID: " + descr.getJobId()
+    			+ "\nJobDescription: " + descr.getJobDescription()
+    			+ "\nAction: " + descr.getAction()
+    			+ "\nCreationDate: " + descr.getCreationDate()
+    			+ "\nStatusCode: " + descr.getStatusCode()
+    			+ "\n");
+    	}
+    }
+    
+    public void listVaults() {
+    	String msg = "Requesting list of all vaults (region " + this.region + ")";
+    	System.out.println(msg);
+    	
+    	ListVaultsRequest request = new ListVaultsRequest("-");
+    	ListVaultsResult result = client.listVaults(request);
+    	
+    	List<DescribeVaultOutput> list = result.getVaultList();
+    	for (DescribeVaultOutput output : list) {
+    		System.out.println("ARN: " + output.getVaultARN() 
+    			+ "\nName: " + output.getVaultName()
+    			+ "\nCreationDate: " + output.getCreationDate()
+    			+ "\nLastInventoryDate: " + output.getLastInventoryDate()
+    			+ "\nNumberOfArchives: " + output.getNumberOfArchives()
+    			+ "\nSizeInBytes: " + output.getSizeInBytes()
+    			+ "\n");
+    	}
     }
 
     public void inventory(String vaultName, String snsTopicName, String sqsQueueName, String fileName) {
@@ -288,7 +405,7 @@ public class Glacier {
 
         while (!messageFound) {
             long minutes = (new Date().getTime() - start.getTime()) / 1000 / 60;
-            System.out.println("Checking for messages: " + minutes + " elapsed");
+            System.out.println("Checking for messages: " + minutes + " mins. elapsed");
             List<Message> msgs = sqsClient.receiveMessage(new ReceiveMessageRequest(sqsQueueUrl).withMaxNumberOfMessages(10)).getMessages();
 
             if (msgs.size() > 0) {
@@ -301,11 +418,24 @@ public class Glacier {
                     JsonNode jobDescNode = mapper.readTree(jpDesc);
                     String retrievedJobId = jobDescNode.get("JobId").getTextValue();
                     String statusCode = jobDescNode.get("StatusCode").getTextValue();
+
                     if (retrievedJobId.equals(jobId)) {
                         messageFound = true;
                         if (statusCode.equals("Succeeded")) {
                             jobSuccessful = true;
                         }
+                    } else {
+                        if (!jobMessage.isEmpty()) {
+                            String action = jobDescNode.get("Action").getTextValue();
+                            String completionDate = jobDescNode.get("CompletionDate").getTextValue();
+                            String creationDate = jobDescNode.get("CreationDate").getTextValue();
+                        	// System.out.println("\njobMessage: " + jobMessage);
+                        	System.out.println("JobId: " + retrievedJobId);
+                        	System.out.println("Action: " + action);
+                        	System.out.println("StatusCode: " + statusCode);
+                        	System.out.println("CompletionDate: " + completionDate);
+                        	System.out.println("CreationDate: " + creationDate + "\n");
+                        }                    	
                     }
                 }
 
