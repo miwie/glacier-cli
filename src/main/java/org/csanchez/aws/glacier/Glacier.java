@@ -189,7 +189,7 @@ public class Glacier {
         HelpFormatter formatter = new HelpFormatter();
         formatter.printHelp("glacier " + "upload vault_name file1 file2 ... | " + "download vault_name archiveId output_file | "
                 + "delete vault_name archiveId | " + "inventory vault_name | " + "describe vault_name | " + "erase vault_name | "
-        		+ "create vault_name | " + "listjobs vault_name | " + "listvaults", options);
+        		+ "create vault_name | " + "listjobs vault_name (add -verbose to see \"Succeeded\" jobs) | " + "listvaults", options);
     }
 
     @SuppressWarnings("static-access")
@@ -306,6 +306,10 @@ public class Glacier {
     	
     	List<GlacierJobDescription> jobList = result.getJobList();
     	for (GlacierJobDescription descr : jobList) {
+    		if (!verbose && descr.getStatusCode().equalsIgnoreCase("Succeeded")) {
+    			continue;
+    		}
+    			
     		System.out.println("JobID: " + descr.getJobId()
     			+ "\nJobDescription: " + descr.getJobDescription()
     			+ "\nAction: " + descr.getAction()
