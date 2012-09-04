@@ -90,6 +90,8 @@ public class Glacier {
 
     private AWSCredentials credentials;
     private String region;
+    
+    private static boolean verbose = false;
 
     public Glacier(AWSCredentials credentials, String region) {
         this.credentials = credentials;
@@ -120,6 +122,15 @@ public class Glacier {
         AWSCredentials credentials = new PropertiesCredentials(new File(userHome + "/AwsCredentials.properties"));
         Glacier glacier = new Glacier(credentials, cmd.getOptionValue("region", "us-east-1"));
 
+        if (arguments.size() == 0) {
+            System.out.println("Missing action argument");
+            return;        	
+        }
+
+        if (cmd.hasOption("verbose")) {
+        	verbose = true;
+        }
+        
         if ("inventory".equals(arguments.get(0))) {
             glacier.inventory(arguments.get(1), cmd.getOptionValue("topic", "glacier"), cmd.getOptionValue("queue", "glacier"),
                     cmd.getOptionValue("file", "glacier.json"));
@@ -199,6 +210,10 @@ public class Glacier {
         Option output = OptionBuilder.withArgName("file_name").hasArg()
                 .withDescription("File to save the inventory to. Defaults to 'glacier.json'").create("output");
         options.addOption(output);
+        
+        Option verbose = OptionBuilder.withArgName("verbose")
+        		.withDescription("Verbose output").create("verbose");
+        options.addOption(verbose);
 
         return options;
     }
@@ -424,7 +439,7 @@ public class Glacier {
                         if (statusCode.equals("Succeeded")) {
                             jobSuccessful = true;
                         }
-                    } else {
+                    } else if (verbose) {
                         if (!jobMessage.isEmpty()) {
                             String action = jobDescNode.get("Action").getTextValue();
                             String completionDate = jobDescNode.get("CompletionDate").getTextValue();
