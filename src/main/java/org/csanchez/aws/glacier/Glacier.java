@@ -212,7 +212,7 @@ public class Glacier {
         options.addOption(output);
         
         Option verbose = OptionBuilder.withArgName("verbose")
-        		.withDescription("Verbose output").create("verbose");
+        		.withDescription("Verbose output (some actions only)").create("verbose");
         options.addOption(verbose);
 
         return options;
