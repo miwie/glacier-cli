@@ -31,7 +31,7 @@ accessKey=…
  -queue <queue_name>   SQS queue to use for inventory retrieval. Defaults to 'glacier'
  -region <region>      Specify URL as the web service URL to use. Defaults to 'us-east-1'
  -topic <topic_name>   SNS topic to use for inventory retrieval. Defaults to 'glacier'
- -verbose              Verbose outpüut (some actions only)
+ -verbose              Verbose outpüut (some commands only)
 ```
 
 ## Examples
