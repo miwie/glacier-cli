@@ -212,7 +212,7 @@ public class Glacier {
         options.addOption(output);
         
         Option verbose = OptionBuilder.withArgName("verbose")
-        		.withDescription("Verbose output (some actions only)").create("verbose");
+        		.withDescription("Verbose output (some commands only)").create("verbose");
         options.addOption(verbose);
 
         return options;
@@ -256,7 +256,7 @@ public class Glacier {
     }
 
     public void create(String vaultName) {
-        String msg = "Requesting create Glacier vault " + vaultName + " (region " + this.region + ")";
+        String msg = "Requesting create Glacier vault " + vaultName + " (region " + this.region + ")\n";
         System.out.println(msg);
         try {
         	CreateVaultRequest request = new CreateVaultRequest().withVaultName(vaultName);
@@ -269,7 +269,7 @@ public class Glacier {
     }
 
     public void erase(String vaultName) {
-        String msg = "Requesting delete Glacier vault " + vaultName + " (region " + this.region + ")";
+        String msg = "Requesting delete Glacier vault " + vaultName + " (region " + this.region + ")\n";
         System.out.println(msg);
         try {
             DeleteVaultRequest request = new DeleteVaultRequest().withVaultName(vaultName);
@@ -282,7 +282,7 @@ public class Glacier {
     }
 
     public void describe(String vaultName) {
-        String msg = "Requesting metadata from Glacier vault " + vaultName + " (region " + this.region + ")";
+        String msg = "Requesting metadata from Glacier vault " + vaultName + " (region " + this.region + ")\n";
         System.out.println(msg);
 
         DescribeVaultRequest request = new DescribeVaultRequest().withVaultName(vaultName);
@@ -298,7 +298,7 @@ public class Glacier {
     }
     
     public void listJobs(String vault) {
-    	String msg = "Requesting list of all jobs for vault " + vault + " (region " + this.region + ")";
+    	String msg = "Requesting list of all jobs for vault " + vault + " (region " + this.region + ")\n";
     	System.out.println(msg);
     	
     	ListJobsRequest request = new ListJobsRequest(vault);
@@ -320,7 +320,7 @@ public class Glacier {
     }
     
     public void listVaults() {
-    	String msg = "Requesting list of all vaults (region " + this.region + ")";
+    	String msg = "Requesting list of all vaults (region " + this.region + ")\n";
     	System.out.println(msg);
     	
     	ListVaultsRequest request = new ListVaultsRequest("-");
