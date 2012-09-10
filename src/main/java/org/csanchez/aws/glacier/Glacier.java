@@ -289,7 +289,7 @@ public class Glacier {
         DescribeVaultResult result = client.describeVault(request);
     
         System.out.print(
-            "\nCreationDate: " + result.getCreationDate() +
+            "CreationDate: " + result.getCreationDate() +
             "\nLastInventoryDate: " + result.getLastInventoryDate() +
             "\nNumberOfArchives: " + result.getNumberOfArchives() + 
             "\nSizeInBytes: " + result.getSizeInBytes() + 
